@@ -49,9 +49,9 @@ async def api_deals(
 
 
 @app.post("/api/refresh")
-async def api_refresh(max_pages: int = 5):
+async def api_refresh():
     if _scrape_lock.locked():
         return JSONResponse({"status": "already_running"}, status_code=409)
     async with _scrape_lock:
-        count = await scraper.scrape_all(max_pages=max_pages)
+        count = await scraper.scrape_all()
     return {"status": "ok", "count": count, "last_scraped_at": db.last_scraped_at()}
