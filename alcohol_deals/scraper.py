@@ -99,14 +99,23 @@ async def extract_card(card, category: str) -> dict | None:
 async def scrape_category(page: Page, category: str, start_url: str, max_pages: int) -> list[dict]:
     items: dict[str, dict] = {}
     url = start_url
-    for _ in range(max_pages):
-        await page.goto(url, wait_until="domcontentloaded", timeout=45000)
+    for page_num in range(1, max_pages + 1):
+        print(f"[debug] {category} p{page_num}: goto {url}")
+        response = await page.goto(url, wait_until="domcontentloaded", timeout=45000)
+        status = response.status if response else "?"
+        final_url = page.url
+        title = await page.title()
+        print(f"[debug]   -> status={status} final_url={final_url} title={title!r}")
+
         try:
             await page.wait_for_selector(SELECTORS["product_card"], timeout=10000)
         except Exception:
+            body_len = len(await page.content())
+            print(f"[debug]   product_card selector not found; body_len={body_len}")
             break
 
         cards = await page.query_selector_all(SELECTORS["product_card"])
+        print(f"[debug]   matched {len(cards)} product cards")
         for card in cards:
             try:
                 row = await extract_card(card, category)
